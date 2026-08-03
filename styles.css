@@ -26,3 +26,14 @@ nav{height:82px}nav button{width:min(120px,20vw);font-size:22px}nav span{font-si
 .tapWord.revealed{background:#e9f9f0;border-bottom-color:#16a365}
 .tapWord.revealed .tapWordDe{display:block}
 .germanHintWord.revealed .hiddenHint{display:block!important}
+
+/* v10 */
+.romanianPrompt{overflow-wrap:anywhere;word-break:normal}
+.clickSentence{display:flex;flex-wrap:wrap;align-items:flex-start;gap:5px;line-height:1.35}
+.tapWord{display:inline-flex;flex-direction:column;align-items:center;max-width:100%;border-radius:10px;padding:3px 5px}
+.tapWordRo{white-space:nowrap}
+.tapWordDe{display:none;font-size:13px;line-height:1.2;color:#168a57;margin-top:5px;max-width:170px;white-space:normal;text-align:center}
+.tapWord.revealed{background:#eaf9f1}
+.tapWord.revealed .tapWordDe{display:block}
+.fullSentenceMeaning{margin-top:12px;padding:10px 12px;border-radius:12px;background:#f0f7f3;color:#3b5f50;font-size:15px;line-height:1.4}
+@media(max-width:430px){.question h1{font-size:clamp(27px,8vw,38px);line-height:1.12}.romanianPrompt{font-size:clamp(19px,5.8vw,25px);padding:15px}.answers{grid-template-columns:1fr}.answer{font-size:18px}.question{padding-left:14px;padding-right:14px}}
