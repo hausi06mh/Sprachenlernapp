@@ -181,7 +181,64 @@ async function recordOwnVoice(){
     mediaRecorder.start();btn.textContent='⏹ Aufnahme beenden';
   }catch(e){toast('Mikrofonzugriff wurde nicht erlaubt.')}
 }
-function startRecognition(w){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){$('#speechResult').innerHTML='<b>Mikrofonerkennung nicht verfügbar.</b><span>Nutze Chrome/Edge oder eine aktuelle Browser-Version. Auf iPhone kann diese Funktion eingeschränkt sein.</span>';return}try{recognition?.abort()}catch{}recognition=new SR();recognition.lang='ro-RO';recognition.interimResults=false;recognition.maxAlternatives=3;const mic=$('#mic');mic.classList.add('recording');mic.textContent='● Höre zu …';$('#speechResult').textContent='Sprich jetzt den vollständigen Satz.';recognition.onresult=ev=>{const alternatives=[...ev.results[0]].map(x=>({text:x.transcript,confidence:x.confidence||0}));const best=alternatives.sort((a,b)=>similarity(b.text,w.roEx)-similarity(a.text,w.roEx))[0];const sim=similarity(best.text,w.roEx);const ok=sim>=.72;$('#speechResult').innerHTML=`<b>${ok?'Gut erkannt!':'Noch einmal üben'}</b><span>Erkannt: „${esc(best.text)}“</span><span>Zielsatz: ${clickableRomanian(w.roEx,w.deEx)}</span><span>Deutsch: ${esc(w.deEx)}</span><span>Übereinstimmung: ${Math.round(sim*100)} %</span>`;bindWordTips();mic.classList.remove('recording');mic.textContent='🎙️ Noch einmal';const next=$('#acceptSpeech');next.classList.remove('hidden');next.textContent=ok?'Als richtig werten':'Weiter mit Fehler';next.onclick=()=>checkAnswer(next,best.text,w.roEx,w,.72,{ro:w.roEx,de:w.deEx})};recognition.onerror=ev=>{mic.classList.remove('recording');mic.textContent='🎙️ Noch einmal';$('#speechResult').innerHTML=`<b>Spracherkennung fehlgeschlagen.</b><span>${esc(ev.error==='not-allowed'?'Mikrofonzugriff wurde nicht erlaubt. Bitte in den Browser-Einstellungen freigeben.':ev.error)}</span>`};recognition.onend=()=>{mic.classList.remove('recording');if(mic.textContent.includes('Höre'))mic.textContent='🎙️ Noch einmal'};recognition.start()}
+let recognitionRunId=0, recognitionStarting=false;
+function speechFallbackHtml(message){return `<b>${esc(message)}</b><span>Safari hat die automatische Erkennung beendet. Du kannst es erneut versuchen oder deine Stimme aufnehmen und selbst mit der Vorlage vergleichen.</span><div class="fallbackRecord"><button class="secondary" id="recordOwn">🎙️ Eigene Stimme aufnehmen</button><audio id="ownPlayback" class="hidden" controls></audio></div>`}
+async function primeMicrophone(){
+  if(!navigator.mediaDevices?.getUserMedia)return;
+  const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+  stream.getTracks().forEach(t=>t.stop());
+}
+async function startRecognition(w,retry=0){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  const result=$('#speechResult'), mic=$('#mic');
+  if(!SR){result.innerHTML=speechFallbackHtml('Automatische Spracherkennung ist auf diesem Gerät nicht verfügbar.');$('#recordOwn')?.addEventListener('click',recordOwnVoice);return}
+  if(recognitionStarting)return;
+  recognitionStarting=true; const runId=++recognitionRunId;
+  try{
+    speechSynthesis?.cancel();
+    if(recognition){try{recognition.onend=null;recognition.onerror=null;recognition.abort()}catch{} recognition=null}
+    await primeMicrophone();
+    await new Promise(r=>setTimeout(r,retry?850:500));
+    if(runId!==recognitionRunId)return;
+    const r=new SR(); recognition=r;
+    r.lang='ro-RO'; r.interimResults=false; r.continuous=false; r.maxAlternatives=5;
+    let gotResult=false, started=false;
+    mic.classList.add('recording');mic.textContent='● Höre zu …';mic.disabled=true;
+    result.innerHTML='<b>Ich höre zu …</b><span>Sprich den vollständigen Satz in normalem Tempo. Safari benötigt manchmal einen kurzen Moment.</span>';
+    r.onstart=()=>{started=true;mic.disabled=false};
+    r.onspeechstart=()=>{result.innerHTML='<b>Sprache erkannt …</b><span>Sprich den Satz fertig.</span>'};
+    r.onresult=ev=>{
+      if(runId!==recognitionRunId)return; gotResult=true;
+      const alternatives=[...ev.results[0]].map(x=>({text:x.transcript,confidence:x.confidence||0}));
+      const best=alternatives.sort((a,b)=>similarity(b.text,w.roEx)-similarity(a.text,w.roEx))[0];
+      const sim=similarity(best.text,w.roEx), ok=sim>=.72;
+      result.innerHTML=`<b>${ok?'Gut erkannt!':'Noch einmal üben'}</b><span>Erkannt: „${esc(best.text)}“</span><span>Zielsatz: ${clickableRomanian(w.roEx,w.deEx)}</span><span>Deutsch: ${esc(w.deEx)}</span><span>Verständlichkeit: ${Math.round(sim*100)} %</span>`;
+      bindWordTips();mic.classList.remove('recording');mic.textContent='🎙️ Noch einmal';mic.disabled=false;
+      const next=$('#acceptSpeech');next.classList.remove('hidden');next.textContent=ok?'Als richtig werten':'Weiter mit Fehler';next.onclick=()=>checkAnswer(next,best.text,w.roEx,w,.72,{ro:w.roEx,de:w.deEx});
+    };
+    r.onerror=ev=>{
+      if(runId!==recognitionRunId||gotResult)return;
+      const code=ev.error||'unknown';
+      mic.classList.remove('recording');mic.textContent='🎙️ Noch einmal';mic.disabled=false;
+      if(code==='aborted'&&retry<1){
+        result.innerHTML='<b>Safari startet das Mikrofon neu …</b><span>Bitte einen Moment warten und danach direkt sprechen.</span>';
+        recognitionStarting=false;setTimeout(()=>startRecognition(w,1),650);return;
+      }
+      const msg=code==='not-allowed'||code==='service-not-allowed'?'Mikrofonzugriff wurde nicht erlaubt.':code==='no-speech'?'Es wurde keine Sprache erkannt. Bitte näher am Mikrofon und etwas deutlicher sprechen.':code==='audio-capture'?'Das Mikrofon konnte nicht geöffnet werden.':'Die automatische Erkennung wurde von Safari beendet.';
+      result.innerHTML=speechFallbackHtml(msg);$('#recordOwn')?.addEventListener('click',recordOwnVoice);
+    };
+    r.onend=()=>{
+      if(runId!==recognitionRunId)return;
+      mic.classList.remove('recording');mic.disabled=false;
+      if(!gotResult&&mic.textContent.includes('Höre'))mic.textContent='🎙️ Noch einmal';
+    };
+    r.start();
+    setTimeout(()=>{if(runId===recognitionRunId&&!started&&!gotResult){try{r.abort()}catch{}}},5000);
+  }catch(err){
+    mic.classList.remove('recording');mic.textContent='🎙️ Noch einmal';mic.disabled=false;
+    result.innerHTML=speechFallbackHtml(err?.name==='NotAllowedError'?'Mikrofonzugriff wurde nicht erlaubt.':'Das Mikrofon konnte nicht gestartet werden.');$('#recordOwn')?.addEventListener('click',recordOwnVoice);
+  }finally{recognitionStarting=false}
+}
 function charSimilarity(a,b){a=norm(a);b=norm(b);if(a===b)return 1;if(!a||!b)return 0;const m=a.length,n=b.length,dp=Array.from({length:m+1},()=>Array(n+1).fill(0));for(let i=0;i<=m;i++)dp[i][0]=i;for(let j=0;j<=n;j++)dp[0][j]=j;for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)dp[i][j]=Math.min(dp[i-1][j]+1,dp[i][j-1]+1,dp[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return 1-dp[m][n]/Math.max(m,n);}
 function answerThreshold(e,correct){const words=norm(correct).split(' ').length;if(e.type==='type'&&words===1)return .84;if(['dictation','translateSentence'].includes(e.type))return .78;return .86;}
 function grammarNote(ro,de){const r=norm(ro);if(r.includes('buna seara'))return '„bună“ steht hier feminin, weil „seară“ (Abend) im Rumänischen feminin ist.';if(r.includes('buna dimineata'))return '„bună“ passt sich an das feminine Wort „dimineață“ an.';if(r.includes('te rog'))return '„te rog“ ist die übliche höfliche Wendung für „bitte“, wörtlich etwa „ich bitte dich“.';if(/(un|o)/.test(r))return '„un“ ist meist der unbestimmte Artikel für männliche/neutrale Wörter, „o“ für weibliche Wörter.';return '';}
@@ -197,4 +254,4 @@ function runSelfTest(){
   const box=document.createElement('pre');box.id='selftest';box.textContent=JSON.stringify(results);document.body.append(box);
 }
 
-renderStats();renderCourse();show('#screenPath');if('speechSynthesis'in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices}if(new URLSearchParams(location.search).has('selftest'))setTimeout(runSelfTest,150);if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js?v=11').catch(()=>{});
+renderStats();renderCourse();show('#screenPath');if('speechSynthesis'in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices}if(new URLSearchParams(location.search).has('selftest'))setTimeout(runSelfTest,150);if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js?v=12').catch(()=>{});

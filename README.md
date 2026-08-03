@@ -1,5 +1,10 @@
-# Lumi Romanian v11
+# Lumi Romanian v12
 
-Korrekturversion mit kontextgerechten Übersetzungsbausteinen. Redewendungen wie „Ce mai faci?“ werden als Einheit („Wie geht es dir?“) erklärt und nicht irreführend Wort für Wort. Unbekannte Sätze erscheinen als ein vollständiger, korrekter Bedeutungsblock. Lumi wird aus `assets/lumi-lynx.png` geladen.
+Safari/iPhone-Sprachaufnahme stabilisiert:
+- Mikrofonberechtigung wird vor der Erkennung geprüft
+- laufende Sprachausgabe wird beendet
+- doppeltes Starten wird verhindert
+- `aborted` wird einmal automatisch neu gestartet
+- Fallback: eigene Stimme aufnehmen und anhören
 
-Alle Dateien direkt über die bestehende GitHub-Version hochladen. Anschließend die Seite einmal mit `?v=11` öffnen.
+Alle Dateien über die bestehende GitHub-Version hochladen und danach einmal mit `?v=12` öffnen.
