@@ -1,15 +1,16 @@
-# Lumi Romanian Final v5
+# Lumi Romanian v6
 
-Kompletter Ersatz-Upload für GitHub Pages. Alle Dateien aus diesem Ordner in die oberste Ebene des bestehenden Repositorys hochladen. Gleichnamige Dateien ersetzen.
+Direkter Ersatz-Upload für die bestehende GitHub-Pages-Version.
 
-## Enthalten
-- 180 freischaltbare Lernpunkte
-- 240 redaktionell ausgearbeitete Kernwörter und Wendungen mit Beispielsätzen
-- 5.400 zusätzliche Wörter im durchsuchbaren Glossar
-- Hör-, Schreib-, Satzbau- und Mikrofonübungen
-- Aufnahme und Wiedergabe der eigenen Stimme
-- Grammatik, Dialoge und Geschichten
-- Offline-PWA und neuer Cache v5
+## Wichtigste Änderungen
+- Design an der freigegebenen zweiten Vorlage ausgerichtet.
+- Lumi als sichtbarer Luchs im Kopfbereich, Lernhinweis und Abschlussbild.
+- Deutsche Wort-Hilfen bleiben zunächst verborgen.
+- Antippen eines deutschen Wortes zeigt die rumänische Lösung und spricht sie sofort aus.
+- Antippen jedes rumänischen Wortes spricht es sofort aus und zeigt die deutsche Bedeutung.
+- Lösungsfeld zeigt immer Rumänisch und Deutsch gemeinsam.
+- Audio-Schaltfläche im Lösungsfeld.
+- Cache-Version 6 verhindert das Laden älterer Dateien.
 
-## Aussprache
-Die App verwendet ausschließlich eine auf dem Gerät vorhandene rumänische Stimme (ro-RO). Die Mikrofonbewertung misst, ob die Spracherkennung den Satz verständlich erkennt; sie ist keine professionelle phonetische Laboranalyse.
+## Upload
+Alle Dateien und den Ordner `assets` in die oberste Ebene des vorhandenen GitHub-Repositories hochladen. Gleichnamige Dateien ersetzen lassen. Anschließend die Seite einmal mit `?v=6` öffnen.

@@ -1,8 +1,8 @@
 {
-  "name": "Lumi Romanian Ultra",
+  "name": "Lumi – Rumänisch lernen",
   "short_name": "Lumi",
   "description": "Deutsch-Rumänisch lernen mit Lernpfad, Aussprache, Dialogen, Geschichten und Grammatik.",
-  "start_url": "./?v=4.0.0",
+  "start_url": "./?v=6.0.0",
   "display": "standalone",
   "background_color": "#f7faf8",
   "theme_color": "#2caf70",
@@ -13,7 +13,7 @@
       "type": "image/png"
     },
     {
-      "src": "assets/lumi.png",
+      "src": "assets/lumi-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
