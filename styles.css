@@ -37,3 +37,12 @@ nav{height:82px}nav button{width:min(120px,20vw);font-size:22px}nav span{font-si
 .tapWord.revealed .tapWordDe{display:block}
 .fullSentenceMeaning{margin-top:12px;padding:10px 12px;border-radius:12px;background:#f0f7f3;color:#3b5f50;font-size:15px;line-height:1.4}
 @media(max-width:430px){.question h1{font-size:clamp(27px,8vw,38px);line-height:1.12}.romanianPrompt{font-size:clamp(19px,5.8vw,25px);padding:15px}.answers{grid-template-columns:1fr}.answer{font-size:18px}.question{padding-left:14px;padding-right:14px}}
+
+/* v11: stable mascot and contextual translation chunks */
+.brand img,.welcome img,.doneCard img,.questionMascot img{object-fit:contain!important;background:transparent!important;border:0!important}
+.clickSentence{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px;line-height:1.2}
+.clickSentence.contextual .tapWord{max-width:100%;white-space:normal}
+.tapWord{min-width:0;padding:7px 9px!important;border-radius:12px!important}
+.tapWordRo{white-space:normal}.tapWordDe{font-size:15px!important;line-height:1.25!important;max-width:260px}
+.fullSentenceMeaning{display:none!important}
+@media(max-width:430px){.brand img{width:76px!important;height:72px!important}.tapWord{font-size:22px!important}.tapWordDe{font-size:14px!important}.question h1{font-size:28px!important}}
