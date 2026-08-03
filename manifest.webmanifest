@@ -1,0 +1,1 @@
+{"name": "Lumi Romanian", "short_name": "Lumi", "start_url": "./", "display": "standalone", "background_color": "#f7faf8", "theme_color": "#4caf73", "icons": [{"src": "assets/lumi.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}]}
