@@ -201,74 +201,116 @@ function stopRecognitionManually(){
   try{recognition.stop()}catch{try{recognition.abort()}catch{}}
   return true;
 }
-async function primeMicrophone(){
-  if(!navigator.mediaDevices?.getUserMedia)return;
-  const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
-  stream.getTracks().forEach(t=>t.stop());
-}
-async function startRecognition(w,retry=0){
+function startRecognition(w){
   if(stopRecognitionManually())return;
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   const result=$('#speechResult'), mic=$('#mic');
-  if(!SR){result.innerHTML=speechFallbackHtml('Automatische Spracherkennung ist auf diesem Gerät nicht verfügbar.');$('#recordOwn')?.addEventListener('click',recordOwnVoice);return}
+  if(!SR){
+    result.innerHTML=speechFallbackHtml('Automatische Spracherkennung ist auf diesem Gerät nicht verfügbar.');
+    $('#recordOwn')?.addEventListener('click',recordOwnVoice);
+    return;
+  }
   if(recognitionStarting)return;
-  recognitionStarting=true; const runId=++recognitionRunId;
-  try{
-    speechSynthesis?.cancel();
-    clearRecognitionTimer();
-    if(recognition){try{recognition.onend=null;recognition.onerror=null;recognition.abort()}catch{} recognition=null}
-    await primeMicrophone();
-    await new Promise(r=>setTimeout(r,retry?500:250));
+  recognitionStarting=true;
+  const runId=++recognitionRunId;
+  speechSynthesis?.cancel();
+  clearRecognitionTimer();
+  if(recognition){
+    try{recognition.onend=null;recognition.onerror=null;recognition.abort()}catch{}
+    recognition=null;
+  }
+  const r=new SR();
+  recognition=r;
+  r.lang='ro-RO';
+  r.interimResults=false;
+  r.continuous=false;
+  r.maxAlternatives=5;
+  let gotResult=false;
+  let manuallyStopped=false;
+  let receivedSpeech=false;
+
+  recognitionActive=true;
+  mic.classList.add('recording');
+  mic.textContent='⏹ Aufnahme beenden';
+  mic.disabled=false;
+  result.innerHTML='<b>Ich höre zu …</b><span>Sprich jetzt den vollständigen Satz. Tippe danach auf „Aufnahme beenden“.</span>';
+
+  r.onstart=()=>{
     if(runId!==recognitionRunId)return;
-    const r=new SR(); recognition=r;
-    r.lang='ro-RO'; r.interimResults=false; r.continuous=false; r.maxAlternatives=5;
-    let gotResult=false, started=false, manuallyStopped=false;
+    recognitionStarting=false;
     recognitionActive=true;
-    mic.classList.add('recording');mic.textContent='⏹ Aufnahme beenden';mic.disabled=false;
-    result.innerHTML='<b>Ich höre zu …</b><span>Sprich den vollständigen Satz und tippe danach noch einmal auf den roten Knopf.</span>';
-    r.onstart=()=>{started=true;recognitionActive=true;mic.disabled=false};
-    r.onspeechstart=()=>{result.innerHTML='<b>Sprache erkannt …</b><span>Sprich den Satz fertig und tippe anschließend auf „Aufnahme beenden“.</span>'};
-    r.onresult=ev=>{
-      if(runId!==recognitionRunId)return; gotResult=true; recognitionActive=false; clearRecognitionTimer();
-      const alternatives=[...ev.results[0]].map(x=>({text:x.transcript,confidence:x.confidence||0}));
-      const best=alternatives.sort((a,b)=>similarity(b.text,w.roEx)-similarity(a.text,w.roEx))[0];
-      const sim=similarity(best.text,w.roEx), ok=sim>=.72;
-      result.innerHTML=`<b>${ok?'Gut erkannt!':'Noch einmal üben'}</b><span>Erkannt: „${esc(best.text)}“</span><span>Zielsatz: ${clickableRomanian(w.roEx,w.deEx)}</span><span>Deutsch: ${esc(w.deEx)}</span><span>Verständlichkeit: ${Math.round(sim*100)} %</span>`;
-      bindWordTips();resetRecognitionButton('🎙️ Noch einmal');
-      const next=$('#acceptSpeech');next.classList.remove('hidden');next.textContent=ok?'Als richtig werten':'Weiter mit Fehler';next.onclick=()=>checkAnswer(next,best.text,w.roEx,w,.72,{ro:w.roEx,de:w.deEx});
-    };
-    r.onerror=ev=>{
-      if(runId!==recognitionRunId||gotResult)return;
-      recognitionActive=false;clearRecognitionTimer();
-      const code=ev.error||'unknown';
+  };
+  r.onspeechstart=()=>{
+    if(runId!==recognitionRunId)return;
+    receivedSpeech=true;
+    result.innerHTML='<b>Sprache erkannt …</b><span>Sprich den Satz fertig und tippe danach auf „Aufnahme beenden“.</span>';
+  };
+  r.onresult=ev=>{
+    if(runId!==recognitionRunId)return;
+    gotResult=true;
+    recognitionStarting=false;
+    recognitionActive=false;
+    clearRecognitionTimer();
+    const alternatives=[...ev.results[0]].map(x=>({text:x.transcript,confidence:x.confidence||0}));
+    const best=alternatives.sort((a,b)=>similarity(b.text,w.roEx)-similarity(a.text,w.roEx))[0];
+    const sim=similarity(best.text,w.roEx), ok=sim>=.72;
+    result.innerHTML=`<b>${ok?'Gut erkannt!':'Noch einmal üben'}</b><span>Erkannt: „${esc(best.text)}“</span><span>Zielsatz: ${clickableRomanian(w.roEx,w.deEx)}</span><span>Deutsch: ${esc(w.deEx)}</span><span>Verständlichkeit: ${Math.round(sim*100)} %</span>`;
+    bindWordTips();
+    resetRecognitionButton('🎙️ Noch einmal');
+    const next=$('#acceptSpeech');
+    next.classList.remove('hidden');
+    next.textContent=ok?'Als richtig werten':'Weiter mit Fehler';
+    next.onclick=()=>checkAnswer(next,best.text,w.roEx,w,.72,{ro:w.roEx,de:w.deEx});
+  };
+  r.onerror=ev=>{
+    if(runId!==recognitionRunId||gotResult)return;
+    recognitionStarting=false;
+    recognitionActive=false;
+    clearRecognitionTimer();
+    const code=ev.error||'unknown';
+    resetRecognitionButton('🎙️ Noch einmal');
+    if(code==='aborted'&&manuallyStopped){
+      result.innerHTML='<b>Keine Sprache erkannt.</b><span>Tippe auf „Noch einmal“, sprich sofort los und beende danach die Aufnahme.</span>';
+      return;
+    }
+    const msg=code==='not-allowed'||code==='service-not-allowed'?'Mikrofonzugriff wurde nicht erlaubt.':code==='no-speech'?'Es wurde keine Sprache erkannt. Tippe erneut und sprich direkt nach dem Start.':code==='audio-capture'?'Das Mikrofon konnte nicht geöffnet werden.':'Safari hat die automatische Erkennung beendet.';
+    result.innerHTML=speechFallbackHtml(msg);
+    $('#recordOwn')?.addEventListener('click',recordOwnVoice);
+  };
+  r.onend=()=>{
+    if(runId!==recognitionRunId)return;
+    recognitionStarting=false;
+    recognitionActive=false;
+    clearRecognitionTimer();
+    if(!gotResult){
       resetRecognitionButton('🎙️ Noch einmal');
-      if(code==='aborted'&&retry<1&&!manuallyStopped){
-        result.innerHTML='<b>Safari startet das Mikrofon neu …</b><span>Bitte einen Moment warten und danach direkt sprechen.</span>';
-        recognitionStarting=false;setTimeout(()=>startRecognition(w,1),450);return;
+      if(result&&!result.querySelector('#recordOwn')){
+        result.innerHTML=receivedSpeech
+          ? '<b>Leider keine Auswertung erhalten.</b><span>Tippe auf „Noch einmal“ und sprich den Satz erneut.</span>'
+          : '<b>Keine Sprache erkannt.</b><span>Tippe auf „Noch einmal“ und sprich direkt nach dem Start los.</span>';
       }
-      const msg=code==='not-allowed'||code==='service-not-allowed'?'Mikrofonzugriff wurde nicht erlaubt.':code==='no-speech'?'Es wurde keine Sprache erkannt. Bitte erneut tippen und etwas deutlicher sprechen.':code==='audio-capture'?'Das Mikrofon konnte nicht geöffnet werden.':'Die automatische Erkennung wurde von Safari beendet.';
-      result.innerHTML=speechFallbackHtml(msg);$('#recordOwn')?.addEventListener('click',recordOwnVoice);
-    };
-    r.onend=()=>{
-      if(runId!==recognitionRunId)return;
-      recognitionActive=false;clearRecognitionTimer();
-      if(!gotResult){
-        resetRecognitionButton('🎙️ Noch einmal');
-        if(result&&!result.querySelector('#recordOwn'))result.innerHTML='<b>Keine Auswertung erhalten.</b><span>Tippe auf „Noch einmal“ und sprich erneut. Du kannst die Aufnahme jederzeit mit demselben Knopf beenden.</span>';
-      }
-    };
+    }
+  };
+
+  try{
+    // Wichtig für iPhone/Safari: start() muss direkt im Klick-Ereignis laufen.
+    // Kein vorheriges await/getUserMedia, sonst geht die Benutzer-Geste verloren.
     r.start();
+    recognitionStarting=false;
     recognitionTimer=setTimeout(()=>{
       if(runId===recognitionRunId&&recognitionActive&&!gotResult){
         manuallyStopped=true;
         stopRecognitionManually();
       }
-    },10000);
-    setTimeout(()=>{if(runId===recognitionRunId&&!started&&!gotResult){try{r.abort()}catch{}}},4000);
+    },12000);
   }catch(err){
-    recognitionActive=false;clearRecognitionTimer();resetRecognitionButton('🎙️ Noch einmal');
-    result.innerHTML=speechFallbackHtml(err?.name==='NotAllowedError'?'Mikrofonzugriff wurde nicht erlaubt.':'Das Mikrofon konnte nicht gestartet werden.');$('#recordOwn')?.addEventListener('click',recordOwnVoice);
-  }finally{recognitionStarting=false}
+    recognitionStarting=false;
+    recognitionActive=false;
+    clearRecognitionTimer();
+    resetRecognitionButton('🎙️ Noch einmal');
+    result.innerHTML=speechFallbackHtml(err?.name==='NotAllowedError'?'Mikrofonzugriff wurde nicht erlaubt.':'Das Mikrofon konnte nicht gestartet werden.');
+    $('#recordOwn')?.addEventListener('click',recordOwnVoice);
+  }
 }
 function charSimilarity(a,b){a=norm(a);b=norm(b);if(a===b)return 1;if(!a||!b)return 0;const m=a.length,n=b.length,dp=Array.from({length:m+1},()=>Array(n+1).fill(0));for(let i=0;i<=m;i++)dp[i][0]=i;for(let j=0;j<=n;j++)dp[0][j]=j;for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)dp[i][j]=Math.min(dp[i-1][j]+1,dp[i][j-1]+1,dp[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return 1-dp[m][n]/Math.max(m,n);}
 function answerThreshold(e,correct){const words=norm(correct).split(' ').length;if(e.type==='type'&&words===1)return .84;if(['dictation','translateSentence'].includes(e.type))return .78;return .86;}
