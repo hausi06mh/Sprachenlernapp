@@ -1,6 +1,15 @@
-# Lumi Romanian – komplett neu
+# Lumi Romanian Final v5
 
-## Hochladen
-Lade den **gesamten Inhalt dieses Ordners** in dein GitHub-Repository hoch. Wichtig: `index.html`, `app.js`, `styles.css`, `data.js`, `manifest.webmanifest`, `sw.js`, der Ordner `assets` und der Ordner `data` müssen auf derselben obersten Ebene liegen.
+Kompletter Ersatz-Upload für GitHub Pages. Alle Dateien aus diesem Ordner in die oberste Ebene des bestehenden Repositorys hochladen. Gleichnamige Dateien ersetzen.
 
-Die App startet ohne externe Bibliotheken. Die 18 großen Wörterbuchpakete liegen getrennt unter `data/vocabulary`, werden aber bewusst nicht beim Start geladen. Dadurch bleiben Lernpfad und Buttons schnell und stabil.
+## Enthalten
+- 180 freischaltbare Lernpunkte
+- 240 redaktionell ausgearbeitete Kernwörter und Wendungen mit Beispielsätzen
+- 5.400 zusätzliche Wörter im durchsuchbaren Glossar
+- Hör-, Schreib-, Satzbau- und Mikrofonübungen
+- Aufnahme und Wiedergabe der eigenen Stimme
+- Grammatik, Dialoge und Geschichten
+- Offline-PWA und neuer Cache v5
+
+## Aussprache
+Die App verwendet ausschließlich eine auf dem Gerät vorhandene rumänische Stimme (ro-RO). Die Mikrofonbewertung misst, ob die Spracherkennung den Satz verständlich erkennt; sie ist keine professionelle phonetische Laboranalyse.
