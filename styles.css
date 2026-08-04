@@ -47,3 +47,5 @@ nav{height:82px}nav button{width:min(120px,20vw);font-size:22px}nav span{font-si
 .fullSentenceMeaning{display:none!important}
 @media(max-width:430px){.brand img{width:76px!important;height:72px!important}.tapWord{font-size:22px!important}.tapWordDe{font-size:14px!important}.question h1{font-size:28px!important}}
 .voicePlayback{width:100%;margin-top:14px}.recordActions{display:flex;gap:10px;margin-top:14px}.recordActions>*{flex:1}.micBtn.recording{background:#d94b5b;box-shadow:0 5px 0 #a72f3e}.speechResult span{display:block}.speechResult b+span{margin-top:4px}@media(max-width:620px){.recordActions{flex-direction:column}}
+
+.recordingFeedbackRow{align-items:center}.recordingFeedbackActions{display:flex;gap:10px;flex-direction:column;min-width:180px}.recordingFeedbackActions button{width:100%}.recordingSuccess{background:#eaf9f1}@media(max-width:620px){.recordingFeedbackRow{align-items:stretch;flex-direction:column}.recordingFeedbackActions{width:100%;min-width:0}.recordingFeedbackActions{display:grid;grid-template-columns:1fr 1fr}.recordingFeedbackActions button{padding:14px 8px}}

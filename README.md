@@ -1,5 +1,10 @@
-# Lumi Romanian v16
+# Lumi Romanian v17
 
-Fix: Nach der letzten Sprachaufnahme wird die Lektion sofort gespeichert und die nächste Lektion direkt geöffnet. Kein Ladebildschirm und kein festhängender Weiter-Button mehr.
+Fix für Sprachübungen:
+- Nach der Aufnahme erscheint eine grüne Erfolgsrückmeldung.
+- Kein automatischer Sprung mehr.
+- Buttons „Zur Übersicht“ und „Nächste Übung“ bzw. „Lektion abschließen“.
+- Das X oben verlässt die Lektion und behält den aktuellen Stand während der Sitzung.
+- Aufnahme zählt als richtig und gibt XP.
 
-Alle Dateien direkt in die oberste Ebene des GitHub-Repositories hochladen und gleichnamige Dateien ersetzen. Danach einmal mit `?v=16` öffnen.
+Alle Dateien direkt in die oberste Ebene des bestehenden GitHub-Repositories hochladen.
