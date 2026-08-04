@@ -1,10 +1,6 @@
-# Lumi Romanian v21
+# Lumi Romanian v22
 
-Überarbeitete Übungslogik:
-- keine zufälligen Namen oder fachfremden Wörter mehr als Antworten in Grundlagenlektionen
-- Antwortoptionen kommen aus aktueller Lektion, Thema und Lernstufe
-- antippbare Übersetzungshilfe bei Wort-, Satz-, Hör-, Schreib- und Satzbauaufgaben
-- Antippen spielt die rumänische Form langsam vor
-- 5.400 Einträge bleiben im Wörterbuch erhalten
-
-Alle Dateien direkt in die oberste Ebene des GitHub-Repositories hochladen. Danach mit `?v=21` öffnen.
+- Satzbau zeigt oben Deutsch; rumänische Hilfe erscheint erst nach Antippen.
+- Aufbaukurs beginnt mit redaktionell gepflegten A1-Grundlagen und steigert sich nach Niveau.
+- 5.400 Wörter bleiben enthalten; Zusatzwortschatz folgt als Vertiefung.
+- Grammatikbereich von A1 bis C1 mit Formen, Merksätzen, Beispielen und Mini-Aufgaben, einschließlich Perfekt, Imperfekt, Plusquamperfekt und Zukunft.
