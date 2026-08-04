@@ -1,6 +1,10 @@
-# Lumi Romanian v18 – stabiler Neuaufbau
+# Lumi Romanian v20
 
-Alle Dateien direkt in die oberste Ebene des bestehenden GitHub-Repositories hochladen und gleichnamige Dateien ersetzen.
-Danach die Seite einmal mit `?v=18` öffnen.
+- 5400 rumänisch-deutsche Wörter und Wendungen
+- 461 Lernlektionen in 24 Themenwelten
+- A1 bis C2
+- Gemischte Aufgaben: Wort, Satz, Hören, Satzbau, Schreiben, Sprechen
+- Dialoge, Geschichten, Grammatik, Fehlertraining
+- Keine automatische Weiterleitung: nächste Lektion wird bewusst im Lernpfad gewählt
 
-Wichtig: Diese Version entfernt alte Service-Worker-Caches beim Start, damit nicht wieder alte App-Dateien geladen werden.
+Upload: Alle Dateien direkt in die oberste Ebene des GitHub-Repositories hochladen. Danach einmal mit `?v=20` öffnen.
