@@ -30,22 +30,72 @@ function startPractice(mode){let pool=mode==='mistakes'?D.words.filter(w=>state.
 function buildItems(ws){if(!ws.length)return[];const types=['choice','sentence','listen','arrange','type','speak'];return ws.slice(0,12).map((w,i)=>({type:types[i%types.length],w}))}
 function openLesson(){$('#lesson').classList.remove('hidden');$('#lesson').scrollTop=0}
 function closeLesson(){stopRecording();run=null;showView('learn')}
-function distract(w,field){return shuffle(D.words.filter(x=>x.id!==w.id&&x.cat===w.cat).map(x=>x[field]).filter(Boolean)).slice(0,3)}
-function renderExercise(){if(!run||!run.items.length){closeLesson();return}stopRecording();const e=run.items[run.index],w=e.w;run.answered=false;$('#lessonProgress').style.width=`${run.index/run.items.length*100}%`;$('#lessonCount').textContent=`${run.index+1}/${run.items.length}`;const prompt={choice:'Was bedeutet das Wort?',sentence:'Was bedeutet der Satz?',listen:'Welchen Satz hörst du?',arrange:'Baue den Satz',type:'Schreibe das rumänische Wort',speak:'Sprich den Satz nach'}[e.type];let h=`<div class="exerciseCard"><div class="mascotBubble"><img src="${LUMI}"><div class="bubble">${prompt}</div></div><h1>${prompt}</h1>`;
-if(e.type==='choice')h+=`<div class="prompt">${esc(w.ro)} <button data-action="speak" data-text="${esc(w.ro)}">🔊</button></div><div class="answers">${shuffle([w.de,...distract(w,'de')]).map(v=>`<button class="answer" data-action="answer" data-value="${esc(v)}" data-correct="${esc(w.de)}">${esc(v)}</button>`).join('')}</div>`;
-if(e.type==='sentence')h+=`<div class="prompt">${esc(w.roEx)} <button data-action="speak" data-text="${esc(w.roEx)}">🔊</button></div><div class="answers">${shuffle([w.deEx,...distract(w,'deEx')]).map(v=>`<button class="answer" data-action="answer" data-value="${esc(v)}" data-correct="${esc(w.deEx)}">${esc(v)}</button>`).join('')}</div>`;
-if(e.type==='listen')h+=`<div class="audioRow"><button class="btn primary" data-action="speak" data-text="${esc(w.roEx)}">🔊 Anhören</button><button class="btn" data-action="speak" data-slow="1" data-text="${esc(w.roEx)}">🐢 Langsam</button></div><div class="answers">${shuffle([w.deEx,...distract(w,'deEx')]).map(v=>`<button class="answer" data-action="answer" data-value="${esc(v)}" data-correct="${esc(w.deEx)}">${esc(v)}</button>`).join('')}</div>`;
-if(e.type==='type')h+=`<div class="prompt">${esc(w.de)}</div><input id="typed" class="typed" placeholder="Rumänisch"><button class="btn primary wide" data-action="check-type" data-correct="${esc(w.ro)}">Prüfen</button>`;
-if(e.type==='arrange'){const parts=w.roEx.replace(/[.!?]/g,'').split(/\s+/).map((x,i)=>({x,i}));h+=`<div class="prompt">${esc(w.deEx)}</div><div id="target" class="target"></div><div class="chips">${shuffle(parts).map(p=>`<button class="chip" data-action="chip" data-word="${esc(p.x)}" data-id="${p.i}">${esc(p.x)}</button>`).join('')}</div><button class="btn primary wide" data-action="check-arrange" data-correct="${esc(parts.map(p=>p.x).join(' '))}">Prüfen</button>`}
-if(e.type==='speak')h+=`<div class="prompt">${esc(w.roEx)}</div><div class="translation"><b>Deutsch:</b> ${esc(w.deEx)}</div><div class="audioRow"><button class="btn" data-action="speak" data-text="${esc(w.roEx)}">🔊 Vorhören</button><button class="btn" data-action="speak" data-slow="1" data-text="${esc(w.roEx)}">🐢 Langsam</button></div><div class="recordBox"><button class="btn blue wide" data-action="record">🎙️ Aufnahme starten</button><div id="recordStatus" class="recordStatus">Sprich den vollständigen Satz.</div><audio id="playback" class="hidden" controls playsinline></audio></div>`;
-h+='</div>';$('#exercise').innerHTML=h;run.selected=[]}
+function cleanOption(v){return String(v||'').trim()}
+function optionPool(w,field){
+  const current=(run?.items||[]).map(i=>i.w).filter(x=>x&&x.id!==w.id);
+  let pool=current;
+  if(w.source==='curated') pool=pool.concat(D.words.filter(x=>x.source==='curated'&&x.id!==w.id&&x.cat===w.cat&&x.level===w.level));
+  else pool=pool.concat(D.words.filter(x=>x.id!==w.id&&x.cat===w.cat&&x.level===w.level&&x.source===w.source));
+  const seen=new Set([norm(w[field])]);
+  return pool.map(x=>cleanOption(x[field])).filter(v=>{
+    const n=norm(v); if(!v||seen.has(n)) return false; seen.add(n);
+    if(field==='de' && v.length>45) return false;
+    if(field==='deEx' && (v.length<4||v.length>100)) return false;
+    return true;
+  });
+}
+function distract(w,field){return shuffle(optionPool(w,field)).slice(0,3)}
+function answerOptions(w,field){
+  let ds=distract(w,field);
+  if(ds.length<3){
+    const fallbacks=field==='de'
+      ? ['ja','nein','danke','bitte','Guten Morgen','Auf Wiedersehen']
+      : ['Guten Morgen!','Danke für deine Hilfe.','Ich verstehe ein wenig Rumänisch.','Wie geht es dir?','Bis morgen!'];
+    for(const v of fallbacks){if(norm(v)!==norm(w[field])&&!ds.some(x=>norm(x)===norm(v)))ds.push(v);if(ds.length===3)break}
+  }
+  return shuffle([w[field],...ds.slice(0,3)]);
+}
+function helpCard(ro,de,label='Übersetzung anzeigen'){
+  return `<div class="helpWrap"><button class="helpBtn" data-action="toggle-help" data-ro="${esc(ro)}">💡 ${label}</button><div class="helpText hidden"><b>Deutsch:</b> ${esc(de)}</div></div>`
+}
+function renderExercise(){
+  if(!run||!run.items.length){closeLesson();return}
+  stopRecording();const e=run.items[run.index],w=e.w;run.answered=false;
+  $('#lessonProgress').style.width=`${run.index/run.items.length*100}%`;
+  $('#lessonCount').textContent=`${run.index+1}/${run.items.length}`;
+  const prompt={choice:'Was bedeutet das Wort?',sentence:'Was bedeutet der Satz?',listen:'Welchen Satz hörst du?',arrange:'Baue den Satz',type:'Schreibe die rumänische Übersetzung',speak:'Sprich den Satz nach'}[e.type];
+  let h=`<div class="exerciseCard"><div class="mascotBubble"><img src="${LUMI}"><div class="bubble">${prompt}</div></div><h1>${prompt}</h1>`;
+  if(e.type==='choice'){
+    h+=`<div class="prompt tappable" data-action="prompt-speak" data-text="${esc(w.ro)}">${esc(w.ro)} <span>🔊</span></div>${helpCard(w.ro,w.de)}`;
+    h+=`<div class="answers">${answerOptions(w,'de').map(v=>`<button class="answer" data-action="answer" data-value="${esc(v)}" data-correct="${esc(w.de)}">${esc(v)}</button>`).join('')}</div>`;
+  }
+  if(e.type==='sentence'){
+    h+=`<div class="prompt tappable" data-action="prompt-speak" data-text="${esc(w.roEx)}">${esc(w.roEx)} <span>🔊</span></div>${helpCard(w.roEx,w.deEx,'Satzhilfe anzeigen')}`;
+    h+=`<div class="answers">${answerOptions(w,'deEx').map(v=>`<button class="answer" data-action="answer" data-value="${esc(v)}" data-correct="${esc(w.deEx)}">${esc(v)}</button>`).join('')}</div>`;
+  }
+  if(e.type==='listen'){
+    h+=`<div class="audioRow"><button class="btn primary" data-action="speak" data-text="${esc(w.roEx)}">🔊 Anhören</button><button class="btn" data-action="speak" data-slow="1" data-text="${esc(w.roEx)}">🐢 Langsam</button></div>${helpCard(w.roEx,w.deEx,'Hilfe anzeigen')}`;
+    h+=`<div class="answers">${answerOptions(w,'deEx').map(v=>`<button class="answer" data-action="answer" data-value="${esc(v)}" data-correct="${esc(w.deEx)}">${esc(v)}</button>`).join('')}</div>`;
+  }
+  if(e.type==='type'){
+    h+=`<div class="prompt">${esc(w.de)}</div>${helpCard(w.ro,w.de,'Lösungshilfe anzeigen')}<input id="typed" class="typed" autocomplete="off" autocapitalize="none" placeholder="Auf Rumänisch schreiben"><button class="btn primary wide" data-action="check-type" data-correct="${esc(w.ro)}">Prüfen</button>`;
+  }
+  if(e.type==='arrange'){
+    const parts=w.roEx.replace(/[.!?]/g,'').split(/\s+/).filter(Boolean).map((x,i)=>({x,i}));
+    h+=`<div class="prompt">${esc(w.deEx)}</div>${helpCard(w.roEx,w.deEx,'Rumänische Hilfe anzeigen')}<div id="target" class="target"></div><div class="chips">${shuffle(parts).map(p=>`<button class="chip" data-action="chip" data-word="${esc(p.x)}" data-id="${p.i}">${esc(p.x)}</button>`).join('')}</div><button class="btn primary wide" data-action="check-arrange" data-correct="${esc(parts.map(p=>p.x).join(' '))}">Prüfen</button>`;
+  }
+  if(e.type==='speak'){
+    h+=`<div class="prompt tappable" data-action="prompt-speak" data-text="${esc(w.roEx)}">${esc(w.roEx)} <span>🔊</span></div><div class="translation"><b>Deutsch:</b> ${esc(w.deEx)}</div><div class="audioRow"><button class="btn" data-action="speak" data-text="${esc(w.roEx)}">🔊 Vorhören</button><button class="btn" data-action="speak" data-slow="1" data-text="${esc(w.roEx)}">🐢 Langsam</button></div><div class="recordBox"><button class="btn blue wide" data-action="record">🎙️ Aufnahme starten</button><div id="recordStatus" class="recordStatus">Sprich den vollständigen Satz.</div><audio id="playback" class="hidden" controls playsinline></audio></div>`;
+  }
+  h+='</div>';$('#exercise').innerHTML=h;run.selected=[];
+}
 function grade(given,correct){return norm(given)===norm(correct)}
 function submit(given,correct){if(!run||run.answered)return;run.answered=true;const e=run.items[run.index],w=e.w,ok=grade(given,correct);if(ok){state.xp+=5}else if(!state.mistakes.includes(w.id))state.mistakes.push(w.id);save();$$('.answer').forEach(b=>{if(norm(b.dataset.value)===norm(correct))b.classList.add('correct');else if(norm(b.dataset.value)===norm(given))b.classList.add('wrong')});const de=e.type==='choice'?w.de:w.deEx,ro=e.type==='choice'||e.type==='type'?w.ro:w.roEx;$('.exerciseCard').insertAdjacentHTML('beforeend',`<div class="feedback ${ok?'':'bad'}"><h2>${ok?'Richtig! Foarte bine!':'Noch nicht ganz.'}</h2><p><b>Rumänisch:</b> ${esc(ro)}</p><p><b>Deutsch:</b> ${esc(de)}</p><div class="feedbackActions"><button class="btn" data-action="close-lesson">Zur Übersicht</button><button class="btn primary" data-action="next">${run.index===run.items.length-1?'Lektion abschließen':'Weiter'}</button></div></div>`)}
 function next(){if(!run)return;if(run.index<run.items.length-1){run.index++;renderExercise();$('#lesson').scrollTop=0;return}finishRun()}
 function finishRun(){if(run?.kind==='lesson'){const n=Number(String(run.lesson.id).replace(/\D/g,''))||run.lesson.index+1;if(!state.completed.includes(n))state.completed.push(n);state.unlocked=Math.max(state.unlocked,n+1);state.gems+=5;state.xp+=15;save()}run=null;showView('learn');toast('Lektion abgeschlossen. Nächste Lektion freigeschaltet.')}
 async function toggleRecord(){const btn=$('[data-action="record"]'),status=$('#recordStatus'),audio=$('#playback');if(recorder?.state==='recording'){recorder.stop();btn.disabled=true;return}if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){status.textContent='Audioaufnahme wird nicht unterstützt.';return}try{speechSynthesis.cancel();chunks=[];stream=await navigator.mediaDevices.getUserMedia({audio:true});recorder=new MediaRecorder(stream);recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};recorder.onstop=()=>{stream?.getTracks().forEach(t=>t.stop());stream=null;const blob=new Blob(chunks,{type:recorder.mimeType||'audio/mp4'});if(recordingUrl)URL.revokeObjectURL(recordingUrl);recordingUrl=URL.createObjectURL(blob);audio.src=recordingUrl;audio.classList.remove('hidden');btn.disabled=false;btn.textContent='🎙️ Noch einmal aufnehmen';status.textContent='Aufnahme gespeichert. Höre sie an und vergleiche sie.';if(!run.answered)submit(run.items[run.index].w.roEx,run.items[run.index].w.roEx)};recorder.start();btn.textContent='⏹ Aufnahme beenden';status.textContent='Aufnahme läuft …'}catch{status.textContent='Mikrofon konnte nicht geöffnet werden.'}}
 function stopRecording(){try{if(recorder?.state==='recording')recorder.stop()}catch{}stream?.getTracks().forEach(t=>t.stop());stream=null;recorder=null}
-function handleClick(e){const b=e.target.closest('[data-action]');if(!b)return;const a=b.dataset.action;if(a==='view')return showView(b.dataset.view);if(a==='tool')return renderTool(b.dataset.tool);if(a==='lesson')return startLesson(Number(b.dataset.lesson));if(a==='practice')return startPractice(b.dataset.mode);if(a==='speak')return speak(b.dataset.text,b.dataset.slow==='1');if(a==='close-lesson')return closeLesson();if(a==='answer')return submit(b.dataset.value,b.dataset.correct);if(a==='check-type')return submit($('#typed')?.value||'',b.dataset.correct);if(a==='chip'){if(b.classList.contains('used'))return;b.classList.add('used');run.selected.push({id:b.dataset.id,word:b.dataset.word});drawTarget();return}if(a==='check-arrange')return submit(run.selected.map(x=>x.word).join(' '),b.dataset.correct);if(a==='record')return toggleRecord();if(a==='next')return next();if(a==='reset'){if(confirm('Fortschritt wirklich zurücksetzen?')){state={view:'progress',xp:0,gems:100,streak:0,unlocked:1,completed:[],mistakes:[]};save();render()}return}}
+function handleClick(e){const b=e.target.closest('[data-action]');if(!b)return;const a=b.dataset.action;if(a==='view')return showView(b.dataset.view);if(a==='tool')return renderTool(b.dataset.tool);if(a==='lesson')return startLesson(Number(b.dataset.lesson));if(a==='practice')return startPractice(b.dataset.mode);if(a==='speak')return speak(b.dataset.text,b.dataset.slow==='1');if(a==='prompt-speak')return speak(b.dataset.text,false);if(a==='toggle-help'){const t=b.nextElementSibling;t?.classList.toggle('hidden');if(b.dataset.ro)speak(b.dataset.ro,true);return}if(a==='close-lesson')return closeLesson();if(a==='answer')return submit(b.dataset.value,b.dataset.correct);if(a==='check-type')return submit($('#typed')?.value||'',b.dataset.correct);if(a==='chip'){if(b.classList.contains('used'))return;b.classList.add('used');run.selected.push({id:b.dataset.id,word:b.dataset.word});drawTarget();return}if(a==='check-arrange')return submit(run.selected.map(x=>x.word).join(' '),b.dataset.correct);if(a==='record')return toggleRecord();if(a==='next')return next();if(a==='reset'){if(confirm('Fortschritt wirklich zurücksetzen?')){state={view:'progress',xp:0,gems:100,streak:0,unlocked:1,completed:[],mistakes:[]};save();render()}return}}
 function drawTarget(){$('#target').innerHTML=run.selected.map((x,i)=>`<button class="chip" data-action="remove-chip" data-index="${i}">${esc(x.word)}</button>`).join('')}
 document.addEventListener('click',e=>{e.preventDefault();const b=e.target.closest('[data-action="remove-chip"]');if(b){const x=run.selected.splice(Number(b.dataset.index),1)[0];document.querySelector(`.chip[data-id="${x.id}"]`)?.classList.remove('used');drawTarget();return}handleClick(e)});
 document.addEventListener('input',e=>{if(e.target.id==='search')drawWords(e.target.value)});
