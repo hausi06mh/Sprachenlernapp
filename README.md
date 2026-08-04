@@ -1,4 +1,4 @@
-# Lumi Romanian v12
+# Lumi Romanian v13
 
 Safari/iPhone-Sprachaufnahme stabilisiert:
 - Mikrofonberechtigung wird vor der Erkennung geprüft
