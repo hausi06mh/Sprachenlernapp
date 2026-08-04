@@ -1,7 +1,5 @@
-# Lumi Romanian v14 – finaler Funktionsfix
+# Lumi Romanian v16
 
-- Lumi ist direkt in der App eingebettet und benötigt keinen Bildpfad.
-- Der Weiter-Button nach einer Sprachaufnahme springt direkt zur nächsten Aufgabe.
-- Cache-Version 14 lädt die neuen Dateien bevorzugt aus dem Netz.
+Fix: Nach der letzten Sprachaufnahme wird die Lektion sofort gespeichert und die nächste Lektion direkt geöffnet. Kein Ladebildschirm und kein festhängender Weiter-Button mehr.
 
-Gesamten Inhalt direkt in die oberste Ebene des bestehenden GitHub-Repositories hochladen.
+Alle Dateien direkt in die oberste Ebene des GitHub-Repositories hochladen und gleichnamige Dateien ersetzen. Danach einmal mit `?v=16` öffnen.

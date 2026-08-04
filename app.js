@@ -228,19 +228,78 @@ function acceptRecordedSpeaking(w){
   if(!run || run.i>=run.items.length || run.advancingRecording)return;
   run.advancingRecording=true;
   const btn=$('#acceptRecording');
-  if(btn){btn.disabled=true;btn.textContent='Wird geladen …'}
-  try{
-    if(mediaRecorder?.state==='recording')mediaRecorder.stop();
-  }catch{}
+  if(btn){btn.disabled=true;btn.textContent='Weiter'}
+  try{if(mediaRecorder?.state==='recording')mediaRecorder.stop()}catch{}
+  stopRecordingTracks();
+  const audio=$('#voicePlayback');
+  if(audio){audio.pause();audio.currentTime=0}
+
+  S.answers++;
+  S.correct++;
+  S.xp+=10;
+  run.score++;
+  S.wordStats[w.id]=(S.wordStats[w.id]||0)+1;
+  S.reviewQueue=(S.reviewQueue||[]).filter(id=>id!==w.id);
+
+  const isLast=run.i+1>=run.items.length;
+  if(!isLast){
+    run.i++;
+    save();
+    run.advancingRecording=false;
+    renderExercise();
+    return;
+  }
+
+  // Letzte Aufgabe: Lektion sofort abschließen und ohne Lade-Zwischenseite
+  // direkt zur nächsten Lektion wechseln.
+  const finishedLesson=run.lesson;
+  S.completed[finishedLesson.id]=true;
+  S.gems=(S.gems||0)+10;
+  S.minutes=(S.minutes||0)+Math.max(1,Math.round((Date.now()-run.start)/60000));
+  save();
+  const lessonIndex=LESSONS.findIndex(l=>l.id===finishedLesson.id);
+  const nextLesson=LESSONS[lessonIndex+1];
+  run.advancingRecording=false;
+  if(nextLesson){
+    startLesson(nextLesson);
+  }else{
+    renderCourse();
+    show('#screenPath');
+  }
+}
+
+function finishLesson(){
+  if(!run)return;
   stopRecordingTracks();
   const audio=$('#voicePlayback');
   if(audio)audio.pause();
-  S.answers++;S.correct++;S.xp+=10;run.score++;
-  S.wordStats[w.id]=(S.wordStats[w.id]||0)+1;
-  S.reviewQueue=(S.reviewQueue||[]).filter(id=>id!==w.id);
+  const total=Math.max(1,run.items.length);
+  const percentage=Math.round((run.score/total)*100);
+  const lesson=run.lesson;
+  const passed=run.hearts>0;
+  if(passed){
+    S.completed[lesson.id]=true;
+    S.gems=(S.gems||0)+10;
+    S.minutes=(S.minutes||0)+Math.max(1,Math.round((Date.now()-run.start)/60000));
+  }
   save();
-  run.i++;
-  setTimeout(()=>{run.advancingRecording=false;renderExercise();window.scrollTo({top:0,behavior:'smooth'});},80);
+  show('#screenDone');
+  $('#doneTitle').textContent=passed?'Lektion geschafft!':'Versuch beendet';
+  $('#doneText').textContent=passed
+    ? `${lesson.title} ist abgeschlossen. Die nächste Lektion ist jetzt freigeschaltet.`
+    : 'Du hast keine Herzen mehr. Wiederhole die Lektion und versuche es erneut.';
+  $('#doneScore').textContent=`${percentage}%`;
+  $('#doneXp').textContent=`+${run.score*10} XP`;
+  const continueBtn=$('#doneContinue');
+  continueBtn.textContent=passed?'Zur nächsten Lektion':'Lektion wiederholen';
+  continueBtn.disabled=false;
+  continueBtn.onclick=()=>{
+    if(!passed){startLesson(lesson);return}
+    const index=LESSONS.findIndex(l=>l.id===lesson.id);
+    renderCourse();
+    const next=LESSONS[index+1];
+    if(next)startLesson(next);else show('#screenPath');
+  };
 }
 
 let recognitionRunId=0, recognitionStarting=false;
@@ -316,4 +375,4 @@ function runSelfTest(){
   const box=document.createElement('pre');box.id='selftest';box.textContent=JSON.stringify(results);document.body.append(box);
 }
 
-renderStats();renderCourse();show('#screenPath');if('speechSynthesis'in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices}if(new URLSearchParams(location.search).has('selftest'))setTimeout(runSelfTest,150);if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js?v=12').catch(()=>{});
+renderStats();renderCourse();show('#screenPath');if('speechSynthesis'in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices}if(new URLSearchParams(location.search).has('selftest'))setTimeout(runSelfTest,150);if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js?v=16').catch(()=>{});

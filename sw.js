@@ -1,4 +1,4 @@
-const CACHE='lumi-v14-final-fix';
+const CACHE='lumi-v16-direct-next';
 const CORE=['./','./index.html','./styles.css?v=14','./data.js?v=14','./content.js?v=14','./app.js?v=14'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
