@@ -1,10 +1,6 @@
-# Lumi Romanian v17
+# Lumi Romanian v18 – stabiler Neuaufbau
 
-Fix für Sprachübungen:
-- Nach der Aufnahme erscheint eine grüne Erfolgsrückmeldung.
-- Kein automatischer Sprung mehr.
-- Buttons „Zur Übersicht“ und „Nächste Übung“ bzw. „Lektion abschließen“.
-- Das X oben verlässt die Lektion und behält den aktuellen Stand während der Sitzung.
-- Aufnahme zählt als richtig und gibt XP.
+Alle Dateien direkt in die oberste Ebene des bestehenden GitHub-Repositories hochladen und gleichnamige Dateien ersetzen.
+Danach die Seite einmal mit `?v=18` öffnen.
 
-Alle Dateien direkt in die oberste Ebene des bestehenden GitHub-Repositories hochladen.
+Wichtig: Diese Version entfernt alte Service-Worker-Caches beim Start, damit nicht wieder alte App-Dateien geladen werden.
