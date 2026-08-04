@@ -1,6 +1,8 @@
-# Lumi Romanian v22
-
-- Satzbau zeigt oben Deutsch; rumänische Hilfe erscheint erst nach Antippen.
-- Aufbaukurs beginnt mit redaktionell gepflegten A1-Grundlagen und steigert sich nach Niveau.
-- 5.400 Wörter bleiben enthalten; Zusatzwortschatz folgt als Vertiefung.
-- Grammatikbereich von A1 bis C1 mit Formen, Merksätzen, Beispielen und Mini-Aufgaben, einschließlich Perfekt, Imperfekt, Plusquamperfekt und Zukunft.
+Lumi Romanian v23
+- 5400 Wörter
+- 469 Lektionen
+- 1000 Dialogsituationen
+- 300 Geschichten
+- Spaced Repetition
+- Offline-Rollenspiele
+- Aufnahme und Aussprachevergleich
