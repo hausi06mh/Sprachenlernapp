@@ -1,10 +1,7 @@
-# Lumi Romanian v13
+# Lumi Romanian v14 – finaler Funktionsfix
 
-Safari/iPhone-Sprachaufnahme stabilisiert:
-- Mikrofonberechtigung wird vor der Erkennung geprüft
-- laufende Sprachausgabe wird beendet
-- doppeltes Starten wird verhindert
-- `aborted` wird einmal automatisch neu gestartet
-- Fallback: eigene Stimme aufnehmen und anhören
+- Lumi ist direkt in der App eingebettet und benötigt keinen Bildpfad.
+- Der Weiter-Button nach einer Sprachaufnahme springt direkt zur nächsten Aufgabe.
+- Cache-Version 14 lädt die neuen Dateien bevorzugt aus dem Netz.
 
-Alle Dateien über die bestehende GitHub-Version hochladen und danach einmal mit `?v=12` öffnen.
+Gesamten Inhalt direkt in die oberste Ebene des bestehenden GitHub-Repositories hochladen.
